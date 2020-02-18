@@ -90,7 +90,8 @@ public class ServeurSocketThread implements Runnable {
            }
         }
         catch (IOException e){
-            System.out.println("I0Exception :)");
+            System.out.println("\n I0Exception in ServerSocketThread :)");
+            e.printStackTrace();
         }
     }
 }

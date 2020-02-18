@@ -41,7 +41,7 @@ public class ClientTCP {
 		*/
     		Socket s=hsock.get(i.getId());
     		if(s == null) {
-			        s = new Socket ();//(a.getKey(),a.getValue()); //127.0.0.1 == localhost
+			        s = new Socket();//(a.getKey(),a.getValue()); //127.0.0.1 == localhost
 			        SocketAddress sockaddr = new InetSocketAddress(a.getKey(),a.getValue());
 			       // s.setReuseAddress(true);
 			       // s.bind(new InetSocketAddress(m.getEmetteur().getAddressAndPorts().get(0).getKey(),3526));

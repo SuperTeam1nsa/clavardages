@@ -446,9 +446,10 @@ public class ControleurApplication implements PropertyChangeListener{
 	        			   break;
 	        		}
 	        	}
-	        	Reseau.getReseau().closeSocket((message.getEmetteur().getId()));
-        	    if(initialized)
+	        	  if(initialized) {
+	        		Reseau.getReseau().closeSocket(message.getEmetteur().getId());
         	    	main.updateList();
+	        	  }
 	        }
 	        else if(message.getType()==Message.Type.ALIVE || message.getType()==Message.Type.CONNECTION) {
 	        	//ONLY PERSON SEND IT (le groupe n'a pas de vie propre, quand 
