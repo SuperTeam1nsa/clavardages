@@ -6,6 +6,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 
 
 //public class ServeurTCP extends Observable implements Observer, Runnable {
@@ -17,13 +18,19 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
 	boolean on=true;
 	private int port;
 	private PropertyChangeSupport support;
+	HashMap<Integer, Socket> hsock;
+	HashMap<Integer, String> hkey;
 	/**
 	 * Constructeur ServeurTCP
 	 * <p>[Design Pattern Observers]</p>
 	 * @param port
+	 * @param hkey 
+	 * @param hsock 
 	 */	
-	public ServeurTCP(int port) {
+	public ServeurTCP(int port, HashMap<Integer, Socket> hsock, HashMap<Integer, String> hkey) {
 		this.port=port;
+		this.hsock=hsock;
+		this.hkey=hkey;
 		support = new PropertyChangeSupport(this);
 	}
     /**
@@ -66,7 +73,7 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
             Socket soc = null;
 			try {
 				soc = ssoc.accept();
-				ServeurSocketThread st = new ServeurSocketThread(soc);
+				ServeurSocketThread st = new ServeurSocketThread(soc,hsock,hkey);
 	            st.addPropertyChangeListener(this); 
 	            Thread th = new Thread(st);
 	            th.start();

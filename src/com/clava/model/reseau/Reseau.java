@@ -4,6 +4,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
+import java.net.Socket;
+import java.util.HashMap;
 
 import javax.swing.JOptionPane;
 
@@ -25,6 +27,8 @@ public class Reseau implements PropertyChangeListener {
 	private ClientUDP clientUDP;
 	private ServeurUDP serveurUDP;
 	static Reseau theNetwork;
+	private HashMap<Integer,Socket> hsock=new HashMap<>();
+	private HashMap<Integer,String> hkey=new HashMap<>();
 	/**
 	 * Remonte message reçu du reseau par les classes ClientHTTP ou ServeurUDP ou encore ServeurTCP à la classe ControlleurApplication [Design Pattern Observers]
 	 * @see ControleurApplication
@@ -66,7 +70,7 @@ public class Reseau implements PropertyChangeListener {
 	 */	
 	public void init(int portTCP, int portUDP, String ipServer, int portServer) {
 		support = new PropertyChangeSupport(this);
-		this.serveurTcp = new ServeurTCP(portTCP);
+		this.serveurTcp = new ServeurTCP(portTCP,hsock, hkey);
 		this.serveurTcp.addPropertyChangeListener(this);
 
 		Thread tr = new Thread(serveurTcp);
@@ -78,7 +82,7 @@ public class Reseau implements PropertyChangeListener {
         
         this.clientHTTP=new ClientHTTP(ipServer, portServer);
         clientHTTP.addPropertyChangeListener(this);
-		this.clientTcp = new ClientTCP();//on get auto adresse +port dans personne destinataire (get from serveur/UDP #discovery part)
+		this.clientTcp = new ClientTCP(hsock, hkey);//on get auto adresse +port dans personne destinataire (get from serveur/UDP #discovery part)
 		this.clientUDP = new ClientUDP(portUDP);//port nécessaire pour broadcast, #same config UDP everywhere
 	}
 	/**

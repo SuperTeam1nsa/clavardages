@@ -83,7 +83,6 @@ public class BD {
 	@SuppressWarnings("static-access")
 	/**
 	 * Décide de créer une BD en fonction de s'il en existe une déjà (classe singleton)
-	 * @see BD#c
 	 * @return BD
 	 */
 	public synchronized static BD getBD() {

@@ -1,6 +1,7 @@
 package com.clava.model.reseau;
 
 import java.net.*;
+import java.util.HashMap;
 
 import com.clava.serializable.Message;
 
@@ -14,14 +15,21 @@ import java.io.*;
  */
 public class ServeurSocketThread implements Runnable {
     Socket s;
+    HashMap<Integer, Socket> hsock;
+    HashMap<Integer, String> hkey;
     private PropertyChangeSupport support;
+	private boolean on;
     /**
      * Constructeur ServeurSocketThread
      * <p>[Design Pattern Observers]</p>
      * @param soc
+     * @param hkey 
+     * @param hsock 
      */
-    public ServeurSocketThread(Socket soc) {
+    public ServeurSocketThread(Socket soc, HashMap<Integer, Socket> hsock, HashMap<Integer, String> hkey) {
         this.s = soc;
+        this.hkey=hkey;
+        this.hsock=hsock;
         support = new PropertyChangeSupport(this);
     }
     /**
@@ -32,13 +40,28 @@ public class ServeurSocketThread implements Runnable {
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
         support.addPropertyChangeListener(pcl);
     }
+    public void closeServeur() { 
+        try {
+        	if(s != null) {
+	        	on=false;
+				s.close();
+				s=null;
+				System.out.print("Collected a conversation socket ! (closed)");
+        	}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
     /**
      * Remonte le message reçu et déserializé au ServeurTCP du reseau
      */
 	@Override
     public void run() {
+		Runtime.getRuntime().addShutdownHook(new Thread(){public void run(){
+	         closeServeur();
+			    }});
         try{
-           
+           while(on) {
             InputStream is = s.getInputStream();
             DataInputStream dis = new DataInputStream(is);
             int len = dis.readInt();
@@ -48,12 +71,18 @@ public class ServeurSocketThread implements Runnable {
             }
             
             try {
-            	support.firePropertyChange("message","", Message.deserialize(data));
+            	Message m=  Message.deserialize(data);
+            	
+            	if(hsock.get(m.getEmetteur().getId())==null)
+            	hsock.put(m.getEmetteur().getId(), s);
+            	
+            	support.firePropertyChange("message","",m);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
             //Clore la connexion
-            s.close();
+            //s.close();
+           }
         }
         catch (IOException e){
             System.out.println("I03xception :)");
