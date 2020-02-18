@@ -19,6 +19,7 @@ public class ServeurSocketThread implements Runnable {
     HashMap<Integer, String> hkey;
     private PropertyChangeSupport support;
 	private boolean on=true;
+	private boolean first=true;
     /**
      * Constructeur ServeurSocketThread
      * <p>[Design Pattern Observers]</p>
@@ -73,9 +74,13 @@ public class ServeurSocketThread implements Runnable {
             try {
             	Message m=  Message.deserialize(data);
             	
-            	if(hsock.get(m.getEmetteur().getId())==null)
+            	if(hsock.get(m.getEmetteur().getId())==null && first)
             	hsock.put(m.getEmetteur().getId(), s);
-            	
+            	else if(hsock.get(m.getEmetteur().getId())==null) //la personne s'est déconnectée
+            	{
+            		closeServeur();
+            	}
+            	first=false;
             	support.firePropertyChange("message","",m);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
@@ -85,7 +90,7 @@ public class ServeurSocketThread implements Runnable {
            }
         }
         catch (IOException e){
-            System.out.println("I03xception :)");
+            System.out.println("I0Exception :)");
         }
     }
 }
