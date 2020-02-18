@@ -446,7 +446,7 @@ public class ControleurApplication implements PropertyChangeListener{
 	        			   break;
 	        		}
 	        	}
-	        	Reseau.getReseau().closeSocket((message.getEmetteur().getId());
+	        	Reseau.getReseau().closeSocket((message.getEmetteur().getId()));
         	    if(initialized)
         	    	main.updateList();
 	        }
