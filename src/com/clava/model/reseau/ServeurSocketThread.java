@@ -18,7 +18,7 @@ public class ServeurSocketThread implements Runnable {
     HashMap<Integer, Socket> hsock;
     HashMap<Integer, String> hkey;
     private PropertyChangeSupport support;
-	private boolean on;
+	private boolean on=true;
     /**
      * Constructeur ServeurSocketThread
      * <p>[Design Pattern Observers]</p>
