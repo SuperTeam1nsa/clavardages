@@ -88,7 +88,7 @@ Le problème de cette technologie est la difficulté de son implémentation en J
 L'utilisation de cette technologie aurait donc nécessité de créer un socket sur le port pour le send, le fermer et ouvrir immédiatement après un socketserveur sur le port, et ce, des 2 côtés ; et aurait alourdi le code. 
 Cette technologie a donc finalement été abandonnée au profit d'[`upnp`](https://en.wikipedia.org/wiki/Universal_Plug_and_Play) et sa librairie pour Java `org.bitlet.weupnp`.
 <br> Une amélioration de clavardeur serait de prendre en charge d'autres techniques pour connecter deux hôtes situés dans deux réseaux privés natés.
-<br> Une piste serait d'utiliser des serveurs STUN ou TURN en se servant par exemple de librairies comme [ice4j]("https://github.com/jitsi/ice4j") ou [UCE](https://github.com/htwg/UCE) pour établir la connexion.
+<br> Une piste serait d'utiliser des serveurs STUN ou TURN en se servant par exemple de librairies comme [ice4j]("https://github.com/jitsi/ice4j") ou [UCE](https://github.com/htwg/UCE) ou de l'UDP hole, avec un protocole UDP fiable comme [UDT-java](https://github.com/JohannesBuchner/udt-java) pour établir la connexion.
 
 
 

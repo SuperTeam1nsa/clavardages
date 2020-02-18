@@ -10,6 +10,7 @@ import java.net.SocketAddress;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 
+import com.clava.model.rsa.RSA;
 import com.clava.serializable.Interlocuteurs;
 import com.clava.serializable.Message;
 /**
@@ -58,9 +59,10 @@ public class ClientTCP {
         DataOutputStream dos = new DataOutputStream(os);
         //Envoyer les datas       
         try {
-			byte[] byteMessage = Message.serialize(m);
+			byte[] byteMessage = RSA.crypt(i.getId(),Message.serialize(m));
 			int len = byteMessage.length;
 			dos.writeInt(len);
+			dos.writeInt(i.getId());
 			if (len > 0) {
 			    dos.write(byteMessage, 0, len);
 			    dos.flush();

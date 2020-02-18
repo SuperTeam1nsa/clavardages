@@ -2,8 +2,10 @@ package com.clava.controleur;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -28,12 +30,15 @@ import org.ini4j.Wini;
 
 import com.clava.model.bd.BD;
 import com.clava.model.reseau.Reseau;
+import com.clava.model.rsa.RSA;
 import com.clava.serializable.Group;
 import com.clava.serializable.Interlocuteurs;
 import com.clava.serializable.Message;
 import com.clava.serializable.Personne;
 import com.clava.vue.VueChoixPseudo;
 import com.clava.vue.VuePrincipale;
+
+
 
 
 //tips: ctrl +r =run (me) ctrl+F11 (standard)
@@ -204,7 +209,10 @@ public class ControleurApplication implements PropertyChangeListener{
 			mac=findMac();
 		
 		System.out.print("ip: "+localIp.toString()+" id: "+mac.hashCode());
-		user= new Personne(new SimpleEntry<InetAddress, Integer>(localIp, portTcp),"moi",true,mac.hashCode()); //fixe par poste (adresse mac by eg)
+		user= new Personne(new SimpleEntry<InetAddress, Integer>(localIp, portTcp),"moi",true,
+				mac.hashCode()); //fixe par poste (adresse mac by eg) 
+		//note: not cryptographic sure id, the cryptographic strenght relies on keys (as the pseudo it's easy to spoof an id)
+		RSA.init(user.getId());
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (SocketException e) {
@@ -216,7 +224,7 @@ public class ControleurApplication implements PropertyChangeListener{
 	 * <p>initialise le réseau, la Vue Pseudo (bloquante) et affiche la Vue Principale en consultant la BD + [Design Pattern Observers]</p>
 	 */
 	ControleurApplication(){
-		init();
+		init();		
 	    //on récupère les gens avec qui on a déjà parlé #offline reading
 	    for(Interlocuteurs p: maBD.getInterlocuteursTalked(user)) {
 			if(p.getId()!=user.getId())

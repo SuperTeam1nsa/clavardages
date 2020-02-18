@@ -3,6 +3,7 @@ package com.clava.model.reseau;
 import java.net.*;
 import java.util.HashMap;
 
+import com.clava.model.rsa.RSA;
 import com.clava.serializable.Message;
 
 import java.beans.PropertyChangeListener;
@@ -67,13 +68,15 @@ public class ServeurSocketThread implements Runnable {
             InputStream is = s.getInputStream();
             DataInputStream dis = new DataInputStream(is);
             int len = dis.readInt();
+            int idkey = dis.readInt();
             byte[] data = new byte[len];
             if (len > 0) {
                 dis.readFully(data);
             }
             
             try {
-            	Message m=  Message.deserialize(data);
+            	byte[] mess=RSA.decrypt(idkey, data);
+            	Message m=  Message.deserialize(mess);
             	id=m.getEmetteur().getId();
             	if(hsock.get(id)==null && first)
             	hsock.put(m.getEmetteur().getId(), s);
