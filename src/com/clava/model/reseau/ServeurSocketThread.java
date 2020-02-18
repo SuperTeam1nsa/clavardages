@@ -43,8 +43,8 @@ public class ServeurSocketThread implements Runnable {
     }
     public void closeServeur() { 
         try {
+        	on=false;
         	if(s != null) {
-	        	on=false;
 				s.close();
 				s=null;
 				System.out.print("Collected a conversation socket ! (closed)");
@@ -79,6 +79,9 @@ public class ServeurSocketThread implements Runnable {
             	else if(hsock.get(m.getEmetteur().getId())==null) //la personne s'est déconnectée
             	{
             		closeServeur();
+            		first=false;
+                	support.firePropertyChange("message","",m);
+                	break;
             	}
             	first=false;
             	support.firePropertyChange("message","",m);
@@ -90,8 +93,8 @@ public class ServeurSocketThread implements Runnable {
            }
         }
         catch (IOException e){
-            System.out.println("\n I0Exception in ServerSocketThread :)");
-            e.printStackTrace();
+            System.out.println("\n Fermeture distante du socket :)");
+            //e.printStackTrace();
         }
     }
 }
