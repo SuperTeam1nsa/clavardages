@@ -329,6 +329,8 @@ public class ControleurApplication implements PropertyChangeListener{
 		        					    p.setConnected(true);
 		        					    /// ok if NAT well config #upnp or manually 
 		        					    p.setAddressAndPorts(i.getAddressAndPorts().get(0));
+		        					    ///nat reversal
+		        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.user,p));
 			        				}
 									found=true;
 								} catch (NoSuchMethodException e) {
@@ -519,6 +521,8 @@ public class ControleurApplication implements PropertyChangeListener{
 	            }
 	            else if(message.getType()==Message.Type.REPLYPSEUDO)
 	        	    answerPseudo=false;
+	            else if(message.getType()==Message.Type.REVERSALCONNECTION)
+	            	System.out.print(" \n Reversal connection established ! Well done ! ");
 	            else
 	        	    System.out.print("WARNING unknow message type : " + message.getType().toString());
         	    }

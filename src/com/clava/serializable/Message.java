@@ -27,7 +27,8 @@ This variable will be loaded with current value defined in the class during dese
 public class Message implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	public enum Type {CONNECTION, DECONNECTION, SWITCH, WHOISALIVE, ALIVE, ASKPSEUDO, REPLYPSEUDO, FILE, GROUPCREATION, OKSERVEUR, DEFAULT}
+	public enum Type {CONNECTION, DECONNECTION, SWITCH, WHOISALIVE, ALIVE, ASKPSEUDO, REPLYPSEUDO, FILE, GROUPCREATION, OKSERVEUR, REVERSALCONNECTION,
+		DEFAULT}
 	private byte[] data;
 	private Interlocuteurs emetteur;
 	private Interlocuteurs destinataire;
@@ -137,7 +138,14 @@ public class Message implements Serializable {
 		static public Message userIsAlive(Interlocuteurs emetteur, Interlocuteurs destinataire) {
 			return new Message(Message.Type.ALIVE,null,emetteur,destinataire);
 			}
-		
+		/**
+		 * @param emetteur utilisateur
+		 * @param destinataire Interlocuteurs qui est à distance
+		 * @return Message
+		 */
+		static public Message reversalConnexionConfig(Interlocuteurs emetteur, Interlocuteurs destinataire) {
+			return new Message(Message.Type.REVERSALCONNECTION,null,emetteur,destinataire);
+			}
 		/**
 		 *Attention crée un message uniquement destiné à du broadcast (pas de destinataire)
 		 * @param emetteur utilisateur

@@ -90,14 +90,24 @@ public class Reseau implements PropertyChangeListener {
 	 * @param message à envoyer
 	 */
 	public void sendTCP(Message message) {
+		sendTCP(message, false);
+	}
+	/**
+	 * Utilise ClientTCP pour envoyer en TCP un message au destinataire indiqué dans le message
+	 * @param message à envoyer
+	 * @param silent true si silencieux souhaite no warning (usefull for reversal connection)
+	 */
+	public void sendTCP(Message message, boolean silent) {
 		try {
 			System.out.print("\n"+message.getEmetteur().getPseudo()+" envoi le message "+message.getType().toString()+" en tcp ("
 		+message.getDestinataire().getAddressAndPorts().toString());
 			clientTcp.sendMessage(message);
 		} catch (IOException e) {
+			if(!silent) {
 			//warning graphique envoi fail
 			JOptionPane.showMessageDialog(null, "Erreur réseau à l'envoi du message :'( ", "Erreur ", JOptionPane.ERROR_MESSAGE);	
 			e.printStackTrace();
+			}
 		}
 	}
 	/**

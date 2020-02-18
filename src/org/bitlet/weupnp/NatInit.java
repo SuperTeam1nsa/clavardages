@@ -47,7 +47,7 @@ public class NatInit implements Runnable {
 	private static int SAMPLE_PORT;
 	private static boolean LIST_ALL_MAPPINGS = false;
 	private GatewayDevice activeGW;
-
+	
 	public NatInit(int port) {
 		Runtime.getRuntime().addShutdownHook(new Thread(){public void run(){
 	         cleaning();
@@ -92,7 +92,7 @@ public class NatInit implements Runnable {
 		try {
 			gateways = gatewayDiscover.discover();
 		if (gateways.isEmpty()) {
-			addLogLine("No gateways found");
+			addLogLine("No gateways found,open manually or with the portMapper in ./util the port");
 			addLogLine("Stopping weupnp");
 			return;
 		}
