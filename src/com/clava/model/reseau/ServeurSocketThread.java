@@ -20,6 +20,7 @@ public class ServeurSocketThread implements Runnable {
     private PropertyChangeSupport support;
 	private boolean on=true;
 	private boolean first=true;
+	private int id=0;
     /**
      * Constructeur ServeurSocketThread
      * <p>[Design Pattern Observers]</p>
@@ -73,10 +74,10 @@ public class ServeurSocketThread implements Runnable {
             
             try {
             	Message m=  Message.deserialize(data);
-            	
-            	if(hsock.get(m.getEmetteur().getId())==null && first)
+            	id=m.getEmetteur().getId();
+            	if(hsock.get(id)==null && first)
             	hsock.put(m.getEmetteur().getId(), s);
-            	else if(hsock.get(m.getEmetteur().getId())==null) //la personne s'est déconnectée
+            	else if(hsock.get(id)==null) //la personne s'est déconnectée
             	{
             		closeServeur();
             		first=false;
@@ -93,6 +94,7 @@ public class ServeurSocketThread implements Runnable {
            }
         }
         catch (IOException e){
+            hsock.remove(id);
             System.out.println("\n Fermeture distante du socket :)");
             //e.printStackTrace();
         }

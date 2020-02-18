@@ -141,7 +141,4 @@ public class Reseau implements PropertyChangeListener {
 		support.firePropertyChange(evt.getPropertyName(), evt.getOldValue(), evt.getNewValue());
 	}
 
-	public void closeSocket(int i) {
-		hsock.remove(i);
-	}
 }
