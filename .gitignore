@@ -57,3 +57,4 @@ doc/*
 *.js
 *.css
 doc/element-list
+*.key
