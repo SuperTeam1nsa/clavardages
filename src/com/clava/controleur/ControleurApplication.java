@@ -395,7 +395,7 @@ public class ControleurApplication implements PropertyChangeListener{
         			|| (message.getDestinataire() != null 
         			&& (message.getDestinataire().getId()== user.getId() 
         			&& message.getEmetteur().getId()==user.getId())))*/
-	        if(message.getEmetteur().getId()!=user.getId()){
+	        if(user!=null && message.getEmetteur().getId()!=user.getId()){
 	            System.out.print("\n Reception de :"+message.getType().toString()+" de la part de "+message.getEmetteur().getPseudo()+
 	        		   "("+message.getEmetteur().getAddressAndPorts().toString()+")"+"\n" );
 	        if(message.getType()==Message.Type.DEFAULT) {
