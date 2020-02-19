@@ -224,7 +224,7 @@ public class ControleurApplication implements PropertyChangeListener{
 	    Reseau.getReseau().addKey(user.getId(),user.getId(),
 	    		Message.Factory.keyExchange(RSA.crypt(user.getId(),AES.generateKey()),user,user).getData());
 	    */
-		AES.test();
+		//AES.test();
 	}
 	/**
 	 * Constructeur ControleurApplication 
@@ -232,7 +232,7 @@ public class ControleurApplication implements PropertyChangeListener{
 	 */
 	ControleurApplication(){
 		init();		
-		test();
+		//test();
 	    //on récupère les gens avec qui on a déjà parlé #offline reading
 	    for(Interlocuteurs p: maBD.getInterlocuteursTalked(user)) {
 			if(p.getId()!=user.getId())
