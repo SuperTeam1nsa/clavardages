@@ -19,7 +19,7 @@ import java.io.*;
 public class ServeurSocketThread implements Runnable {
     Socket s;
     HashMap<Integer, Socket> hsock;
-    HashMap<Integer, SecretKey> hkey;
+    HashMap<Integer, SecretKey> hkeyr;
     private PropertyChangeSupport support;
 	private boolean on=true;
 	private boolean first=true;
@@ -33,7 +33,7 @@ public class ServeurSocketThread implements Runnable {
      */
     public ServeurSocketThread(Socket soc, HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey2) {
         this.s = soc;
-        this.hkey=hkey2;
+        this.hkeyr=hkey2;
         this.hsock=hsock;
         support = new PropertyChangeSupport(this);
     }
@@ -86,8 +86,8 @@ public class ServeurSocketThread implements Runnable {
 	            		else
 	            			System.out.print("\n reception of safe unencrypted data");
 	            	}catch(Exception e) {
-	            		if(hkey.get(idkey) !=null)
-	            			m=Message.deserialize(AES.decrypt(hkey.get(idkey), data));
+	            		if(hkeyr.get(idkey) !=null)
+	            			m=Message.deserialize(AES.decrypt(hkeyr.get(idkey), data));
 	            		else
 	            			System.out.print("\n warning reception of a crypted message without the key to decrypt");
 	            	}

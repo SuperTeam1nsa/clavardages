@@ -71,7 +71,7 @@ public class ClientTCP {
         		byteMessage=data;
 			int len = byteMessage.length;
 			dos.writeInt(len);
-			dos.writeInt(i.getId());
+			dos.writeInt(m.getEmetteur().getId());
 			if (len > 0) {
 			    dos.write(byteMessage, 0, len);
 			    dos.flush();
