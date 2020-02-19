@@ -346,7 +346,7 @@ public class ControleurApplication implements PropertyChangeListener{
 		        					    /// ok if NAT well config #upnp or manually 
 		        					    p.setAddressAndPorts(i.getAddressAndPorts().get(0));
 		        					    //envoie de notre clef AES calculée
-		        					    Reseau.getReseau().cryptProtocole(message.getEmetteur().getId(),user,message.getEmetteur());
+		        					    Reseau.getReseau().cryptProtocole(p.getId(),user,p);
 		        					    ///nat reversal
 		        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.user,p));
 			        				}

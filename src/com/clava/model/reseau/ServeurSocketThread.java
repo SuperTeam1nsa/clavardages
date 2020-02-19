@@ -87,7 +87,7 @@ public class ServeurSocketThread implements Runnable {
 	            			System.out.print("\n reception of safe unencrypted data");
 	            	}catch(Exception e) {
 	            		if(hkeyr.get(idkey) !=null) {
-	            			System.out.print("\n key used :"+new String(hkeyr.get(idkey).getEncoded())+" id recu: "+idkey);	
+	            			System.out.print("\n key used reception:"+new String(hkeyr.get(idkey).getEncoded())+" id recu: "+idkey+"\n");	
 	            			m=Message.deserialize(AES.decrypt(hkeyr.get(idkey), data));
 	            		}
 	            		else
