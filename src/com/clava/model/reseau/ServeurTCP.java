@@ -21,7 +21,7 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
 	private int port;
 	private PropertyChangeSupport support;
 	HashMap<Integer, Socket> hsock;
-	HashMap<Integer, SecretKey> hkey;
+	HashMap<Integer, SecretKey> hkeyr;
 	/**
 	 * Constructeur ServeurTCP
 	 * <p>[Design Pattern Observers]</p>
@@ -32,7 +32,7 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
 	public ServeurTCP(int port, HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey2) {
 		this.port=port;
 		this.hsock=hsock;
-		this.hkey=hkey2;
+		this.hkeyr=hkey2;
 		support = new PropertyChangeSupport(this);
 	}
     /**
@@ -75,7 +75,7 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
             Socket soc = null;
 			try {
 				soc = ssoc.accept();
-				ServeurSocketThread st = new ServeurSocketThread(soc,hsock,hkey);
+				ServeurSocketThread st = new ServeurSocketThread(soc,hsock,hkeyr);
 	            st.addPropertyChangeListener(this); 
 	            Thread th = new Thread(st);
 	            th.start();
