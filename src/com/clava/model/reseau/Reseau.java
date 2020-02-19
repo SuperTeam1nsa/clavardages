@@ -3,6 +3,7 @@ package com.clava.model.reseau;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
@@ -166,7 +167,7 @@ public class Reseau implements PropertyChangeListener {
 			}
 		}
 		else
-			System.out.print("\n \n WARNING CANNOT ESTABLISH SECURE PROTOCOL (MISS PUCLIC KEY)");
+			System.out.print("\n \n WARNING CANNOT ESTABLISH SECURE PROTOCOL (MISS PUCLIC KEY):"+new File("keys/"+id+"/public.key").getAbsolutePath());
 	}
 
 	public void addKey(int otherId, int userId, byte[] data) {

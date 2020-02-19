@@ -62,6 +62,8 @@ public class ClientTCP {
         //Envoyer les datas       
         try {
         	SecretKey key=hkey.get(i.getId());
+        	System.out.print("\n key used sending:"+new String(key.getEncoded())+" to : "+i.getId()+" from "+ m.getEmetteur().getId()+"\n");	
+        	
         	byte[] data=Message.serialize(m);
         	byte[] byteMessage=null;
         	//si on a pas la clef ou quel'on envoie la cle (cryptage RSA déjà réalisé)
