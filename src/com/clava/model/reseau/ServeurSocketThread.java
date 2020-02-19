@@ -3,7 +3,9 @@ package com.clava.model.reseau;
 import java.net.*;
 import java.util.HashMap;
 
-import com.clava.model.rsa.RSA;
+import javax.crypto.SecretKey;
+
+import com.clava.model.crypt.AES;
 import com.clava.serializable.Message;
 
 import java.beans.PropertyChangeListener;
@@ -17,7 +19,7 @@ import java.io.*;
 public class ServeurSocketThread implements Runnable {
     Socket s;
     HashMap<Integer, Socket> hsock;
-    HashMap<Integer, String> hkey;
+    HashMap<Integer, SecretKey> hkey;
     private PropertyChangeSupport support;
 	private boolean on=true;
 	private boolean first=true;
@@ -26,12 +28,12 @@ public class ServeurSocketThread implements Runnable {
      * Constructeur ServeurSocketThread
      * <p>[Design Pattern Observers]</p>
      * @param soc
-     * @param hkey 
+     * @param hkey2 
      * @param hsock 
      */
-    public ServeurSocketThread(Socket soc, HashMap<Integer, Socket> hsock, HashMap<Integer, String> hkey) {
+    public ServeurSocketThread(Socket soc, HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey2) {
         this.s = soc;
-        this.hkey=hkey;
+        this.hkey=hkey2;
         this.hsock=hsock;
         support = new PropertyChangeSupport(this);
     }
@@ -75,11 +77,23 @@ public class ServeurSocketThread implements Runnable {
             }
             
             try {
-            	byte[] mess=RSA.decrypt(idkey, data);
-            	Message m=  Message.deserialize(mess);
+            	//byte[] mess=RSA.decrypt(idkey, data);
+            	Message m=null;
+	            	try {
+	            		m=Message.deserialize(data);
+	            		if(m.getType()==Message.Type.DEFAULT || m.getType()==Message.Type.FILE)
+	            			System.out.print("\n warning reception of unencrypted message");
+	            		else
+	            			System.out.print("\n reception of safe unencrypted data");
+	            	}catch(Exception e) {
+	            		if(hkey.get(idkey) !=null)
+	            			m=Message.deserialize(AES.decrypt(hkey.get(idkey), data));
+	            		else
+	            			System.out.print("\n warning reception of a crypted message without the key to decrypt");
+	            	}
             	id=m.getEmetteur().getId();
             	if(hsock.get(id)==null && first)
-            	hsock.put(m.getEmetteur().getId(), s);
+            		hsock.put(m.getEmetteur().getId(), s);
             	else if(hsock.get(id)==null) //la personne s'est déconnectée
             	{
             		closeServeur();

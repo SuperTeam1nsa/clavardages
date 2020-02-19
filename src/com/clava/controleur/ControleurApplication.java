@@ -2,10 +2,8 @@ package com.clava.controleur;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -29,8 +27,9 @@ import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Wini;
 
 import com.clava.model.bd.BD;
+import com.clava.model.crypt.AES;
+import com.clava.model.crypt.RSA;
 import com.clava.model.reseau.Reseau;
-import com.clava.model.rsa.RSA;
 import com.clava.serializable.Group;
 import com.clava.serializable.Interlocuteurs;
 import com.clava.serializable.Message;
@@ -219,12 +218,21 @@ public class ControleurApplication implements PropertyChangeListener{
 			e.printStackTrace();
 		}
 	}
+	void test() {
+		/*
+	    Reseau.getReseau().cryptProtocole(user.getId(),user,user);
+	    Reseau.getReseau().addKey(user.getId(),user.getId(),
+	    		Message.Factory.keyExchange(RSA.crypt(user.getId(),AES.generateKey()),user,user).getData());
+	    */
+		AES.test();
+	}
 	/**
 	 * Constructeur ControleurApplication 
 	 * <p>initialise le réseau, la Vue Pseudo (bloquante) et affiche la Vue Principale en consultant la BD + [Design Pattern Observers]</p>
 	 */
 	ControleurApplication(){
 		init();		
+		test();
 	    //on récupère les gens avec qui on a déjà parlé #offline reading
 	    for(Interlocuteurs p: maBD.getInterlocuteursTalked(user)) {
 			if(p.getId()!=user.getId())
@@ -337,6 +345,8 @@ public class ControleurApplication implements PropertyChangeListener{
 		        					    p.setConnected(true);
 		        					    /// ok if NAT well config #upnp or manually 
 		        					    p.setAddressAndPorts(i.getAddressAndPorts().get(0));
+		        					    //envoie de notre clef AES calculée
+		        					    Reseau.getReseau().cryptProtocole(message.getEmetteur().getId(),user,message.getEmetteur());
 		        					    ///nat reversal
 		        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.user,p));
 			        				}
@@ -482,10 +492,14 @@ public class ControleurApplication implements PropertyChangeListener{
 	        	}
         	    if(!found) {
         	    	model.add(0, message.getEmetteur());
-		        } 		        	  
+		        }
+        	    Reseau.getReseau().cryptProtocole(message.getEmetteur().getId(),user,message.getEmetteur());
+        	    
 		        maBD.setIdPseudoLink(message.getEmetteur().getPseudo(), message.getEmetteur().getId());
 		        if(initialized)
 		        main.updateList();
+	        }else if(message.getType()==Message.Type.KEY ) {
+	        	Reseau.getReseau().addKey(message.getEmetteur().getId(),user.getId(),message.getData());
 	        }
 	        else if(message.getType()==Message.Type.GROUPCREATION ) { 	        	   
 	        	   if(!model.contains(message.getDestinataire())) {

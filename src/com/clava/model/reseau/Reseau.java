@@ -7,8 +7,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.HashMap;
 
+import javax.crypto.SecretKey;
 import javax.swing.JOptionPane;
 
+import com.clava.model.crypt.AES;
+import com.clava.model.crypt.RSA;
+import com.clava.serializable.Interlocuteurs;
 import com.clava.serializable.Message;
 
 //https://www.baeldung.com/java-observer-pattern
@@ -28,7 +32,9 @@ public class Reseau implements PropertyChangeListener {
 	private ServeurUDP serveurUDP;
 	static Reseau theNetwork;
 	private HashMap<Integer,Socket> hsock=new HashMap<>();
-	private HashMap<Integer,String> hkey=new HashMap<>();
+	private HashMap<Integer,SecretKey> hkey=new HashMap<>();//clef d'envoi
+	private HashMap<Integer,SecretKey> hkeyr=new HashMap<>();//clef de reception
+
 	/**
 	 * Remonte message reçu du reseau par les classes ClientHTTP ou ServeurUDP ou encore ServeurTCP à la classe ControlleurApplication [Design Pattern Observers]
 	 * @see ControleurApplication
@@ -70,7 +76,7 @@ public class Reseau implements PropertyChangeListener {
 	 */	
 	public void init(int portTCP, int portUDP, String ipServer, int portServer) {
 		support = new PropertyChangeSupport(this);
-		this.serveurTcp = new ServeurTCP(portTCP,hsock, hkey);
+		this.serveurTcp = new ServeurTCP(portTCP,hsock, hkeyr);
 		this.serveurTcp.addPropertyChangeListener(this);
 
 		Thread tr = new Thread(serveurTcp);
@@ -149,6 +155,22 @@ public class Reseau implements PropertyChangeListener {
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		support.firePropertyChange(evt.getPropertyName(), evt.getOldValue(), evt.getNewValue());
+	}
+
+	public void cryptProtocole(int id,Interlocuteurs user, Interlocuteurs to) {
+		if(RSA.havePublic(id)) {
+			if(hkey.get(id)==null) {
+				byte[] key= AES.generateKey();
+				hkey.put(id,AES.fromByte(key));
+				this.sendTCP(Message.Factory.keyExchange(RSA.crypt(id,key),user,to));
+			}
+		}
+		else
+			System.out.print("\n \n WARNING CANNOT ESTABLISH SECURE PROTOCOL (MISS PUCLIC KEY)");
+	}
+
+	public void addKey(int otherId, int userId, byte[] data) {
+		hkeyr.put(otherId, AES.fromByte(RSA.decrypt(userId,data)));
 	}
 
 }

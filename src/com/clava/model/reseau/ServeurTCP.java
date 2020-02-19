@@ -8,6 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 
+import javax.crypto.SecretKey;
+
 
 //public class ServeurTCP extends Observable implements Observer, Runnable {
 /**
@@ -19,18 +21,18 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
 	private int port;
 	private PropertyChangeSupport support;
 	HashMap<Integer, Socket> hsock;
-	HashMap<Integer, String> hkey;
+	HashMap<Integer, SecretKey> hkey;
 	/**
 	 * Constructeur ServeurTCP
 	 * <p>[Design Pattern Observers]</p>
 	 * @param port
-	 * @param hkey 
+	 * @param hkey2 
 	 * @param hsock 
 	 */	
-	public ServeurTCP(int port, HashMap<Integer, Socket> hsock, HashMap<Integer, String> hkey) {
+	public ServeurTCP(int port, HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey2) {
 		this.port=port;
 		this.hsock=hsock;
-		this.hkey=hkey;
+		this.hkey=hkey2;
 		support = new PropertyChangeSupport(this);
 	}
     /**

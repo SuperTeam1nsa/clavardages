@@ -27,8 +27,8 @@ This variable will be loaded with current value defined in the class during dese
 public class Message implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	public enum Type {CONNECTION, DECONNECTION, SWITCH, WHOISALIVE, ALIVE, ASKPSEUDO, REPLYPSEUDO, FILE, GROUPCREATION, OKSERVEUR, REVERSALCONNECTION,
-		DEFAULT}
+	public enum Type {CONNECTION, DECONNECTION, SWITCH, WHOISALIVE, ALIVE, ASKPSEUDO, REPLYPSEUDO, FILE, GROUPCREATION, OKSERVEUR,
+		KEY,REVERSALCONNECTION,DEFAULT}
 	private byte[] data;
 	private Interlocuteurs emetteur;
 	private Interlocuteurs destinataire;
@@ -199,6 +199,9 @@ public class Message implements Serializable {
 		 */
 		static public Message okServeur() {
 			return new Message(Message.Type.OKSERVEUR,null);
+		}
+		public static Message keyExchange(byte[] crypt,Interlocuteurs emetteur,Interlocuteurs destinataires) {
+			return new Message(Message.Type.KEY,crypt,emetteur,destinataires);
 		}
 		
 		

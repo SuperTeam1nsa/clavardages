@@ -10,7 +10,9 @@ import java.net.SocketAddress;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 
-import com.clava.model.rsa.RSA;
+import javax.crypto.SecretKey;
+
+import com.clava.model.crypt.AES;
 import com.clava.serializable.Interlocuteurs;
 import com.clava.serializable.Message;
 /**
@@ -18,8 +20,8 @@ import com.clava.serializable.Message;
  */
 public class ClientTCP {
 	HashMap<Integer, Socket> hsock;
-	HashMap<Integer, String> hkey;
-	public ClientTCP(HashMap<Integer, Socket> hsock, HashMap<Integer, String> hkey) {
+	HashMap<Integer, SecretKey> hkey;
+	public ClientTCP(HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey) {
 		this.hsock=hsock;
 		this.hkey=hkey;
 	}
@@ -59,7 +61,14 @@ public class ClientTCP {
         DataOutputStream dos = new DataOutputStream(os);
         //Envoyer les datas       
         try {
-			byte[] byteMessage = RSA.crypt(i.getId(),Message.serialize(m));
+        	SecretKey key=hkey.get(i.getId());
+        	byte[] data=Message.serialize(m);
+        	byte[] byteMessage=null;
+        	//si on a pas la clef ou quel'on envoie la cle (cryptage RSA déjà réalisé)
+        	if(key != null && m.getType()!=Message.Type.KEY)
+        		byteMessage=AES.encrypt(key,data );// RSA.crypt(i.getId(),Message.serialize(m));
+        	else
+        		byteMessage=data;
 			int len = byteMessage.length;
 			dos.writeInt(len);
 			dos.writeInt(i.getId());

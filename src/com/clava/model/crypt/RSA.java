@@ -1,4 +1,4 @@
-package com.clava.model.rsa;
+package com.clava.model.crypt;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -127,5 +127,8 @@ public class RSA {
 		byte[] crypted=RSA.crypt(id,"hola mi amor <3 ".getBytes());
 		System.out.println("\n Texte decrypte :"+new String(RSA.decrypt(id,crypted)));
 		System.out.println("\n Texte crypte :" +new String(crypted));
+	}
+	public static boolean havePublic(int id) {
+		return (new File("keys/"+id+"/public.key").exists());
 	}
 }
