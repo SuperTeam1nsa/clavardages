@@ -310,7 +310,7 @@ public class VuePrincipale {
 	      	          byte[] data;
 					try {
 						data = Files.readAllBytes(Paths.get(f.getAbsolutePath()));
-		                app.sendMessage(data,f,activeUser);
+		                app.sendFileMessage(data,f,activeUser);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}

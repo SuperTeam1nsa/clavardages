@@ -1,7 +1,5 @@
 package com.clava.controleur;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramSocket;
@@ -10,8 +8,6 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -27,7 +23,6 @@ import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Wini;
 
 import com.clava.model.bd.BD;
-import com.clava.model.crypt.AES;
 import com.clava.model.crypt.RSA;
 import com.clava.model.reseau.Reseau;
 import com.clava.serializable.Group;
@@ -37,24 +32,22 @@ import com.clava.serializable.Personne;
 import com.clava.vue.VueChoixPseudo;
 import com.clava.vue.VuePrincipale;
 
-
-
-
 //tips: ctrl +r =run (me) ctrl+F11 (standard)
 //ctrl+maj+F11=code coverage (standard)
 //ObjectAid UML (retro URL)
 //public class ControleurApplication implements Observer {
 /**
  * Main class of application 
+ * Initialize all components and deal with crafting and calling Reseau to send adequate Message
+ * The reception is performed by MessageControleur
  */
-public class ControleurApplication implements PropertyChangeListener{
+public class ControleurApplication {
 	private Personne user;
 	private VuePrincipale main;
+	private MessageControleur mc;
 	private BD maBD=BD.getBD();
 	private DefaultListModel<Interlocuteurs> model = new DefaultListModel<Interlocuteurs>();
-	ArrayList<Integer> localConnexion=new ArrayList<>();
 	private File pathDownload;
-	private Boolean initialized=false;
 	private String pseudoWaiting="";
 	private boolean answerPseudo;
 	private Object mutex = new Object();
@@ -198,7 +191,8 @@ public class ControleurApplication implements PropertyChangeListener{
 		//System.out.print("data :" +portTcp+" "+portUDP+" "+portServer+" "+ini.get("IP", "publicServerIp", String.class)+" "+ini.get("IP", "doNotUseAutoIpAndUseThisOne", String.class));
 		new NatInit(portTcp);
 		Reseau.getReseau().init(portTcp,portUDP,ipServer,portServer);
-		Reseau.getReseau().addPropertyChangeListener(this);//.addObserver(this);
+		mc=new MessageControleur(this,model,user,pseudoWaiting,main,maBD);
+		Reseau.getReseau().addPropertyChangeListener(mc);//.addObserver(this);
 		try {
 		if(forceUseIp)
 			localIp=ipForceLocal;
@@ -238,10 +232,12 @@ public class ControleurApplication implements PropertyChangeListener{
 			if(p.getId()!=user.getId())
 			model.addElement(p);
 	    }
-	    Reseau.getReseau().sendDataBroadcast(Message.Factory.whoIsAliveBroadcast(user));
+	    Reseau.getReseau().sendLocalOnly(Message.Factory.whoIsAliveBroadcast(user));
 	    new VueChoixPseudo(this,false);
+	    //after pseudo, to let the time for local message to be sent.
+	    Reseau.getReseau().sendServeurOnly(Message.Factory.whoIsAliveBroadcast(user));
 	    main=new VuePrincipale(this,model);
-	    initialized=true;
+	    mc.setInitialized(true);
 	    Reseau.getReseau().sendDataBroadcast(Message.Factory.userConnectedBroadcast(user));
 	    //on s'ajoute après que le serveur sait que l'on est connecte
 	    //rq: on s'ajoute à la main car on bloque les broadcast venant de nous même en réception (pollution)
@@ -305,252 +301,7 @@ public class ControleurApplication implements PropertyChangeListener{
 			return false;
 		}
 	}
-	/**
-	 * PropertyChange reçoit les messages de Reseau [Design Pattern Observers]
-	 * et traite selon le type de message 
-	 */
-	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-		//on ne repond pas tant que l'on n'est pas initialis� (avec un pseudo)
-		//System.out.print(" \n type d'évenements: : "+evt.getPropertyName());
-		if(evt.getPropertyName().equals("serveur") && evt.getNewValue() instanceof Message) {
-			Message message = (Message) evt.getNewValue();
-			
-			//si une personne nous envoie les infos localement pas besoin d'écouter à retard les mêmes infos venant du serveur
-			//if(!localConnexion.contains(message.getEmetteur().getId())) {
-			/*System.out.print(" \n Serveur send us :" +message.getType()+" avec ");
-			for(Interlocuteurs i:message.getEmetteur().getInterlocuteurs()) {
-				System.out.print( "\n pseudo :"+i.getPseudo()+"  "+i.getAddressAndPorts());
-			}*/
-			if(message.getType()==Message.Type.OKSERVEUR) {
-				
-			}
-			else if(message.getType()==Message.Type.REPLYPSEUDO)
-	        	   answerPseudo=false;
-			else if(message.getType()==Message.Type.ALIVE){
-			
-				for(Object ob: model.toArray()) {
-	        		   Interlocuteurs p =(Interlocuteurs)ob;
-	        		   boolean found=false;
-	        		   for(Interlocuteurs i:message.getEmetteur().getInterlocuteurs()) {
-			        		if(p.getId()==i.getId() && !localConnexion.contains(p.getId())) {
-			        			try {
-			        				//le serveur contient tjrs le pseudo le + à jour
-			        				if(!p.getPseudo().equals(i.getPseudo())) {
-					        			System.out.print(" \n [serveur] MAJ du pseudo de : "+p.getPseudo());
-										p.setPseudo(i.getPseudo());
-			        				}//si app crashe, on ignore l'info du serveur disant qu'on était déjà connecté (notre connexion va régulariser la situation)
-			        				if(!p.getConnected() && i.getId()!=user.getId()) {
-		        					    System.out.print(" \n [serveur] Connexion de : "+p.getPseudo()+" à "+i.getAddressAndPorts().get(0));
-		        					    p.setConnected(true);
-		        					    /// ok if NAT well config #upnp or manually 
-		        					    p.setAddressAndPorts(i.getAddressAndPorts().get(0));
-		        					    //envoie de notre clef AES calculée
-		        					    Reseau.getReseau().cryptProtocole(p.getId(),user,p);
-		        					    ///nat reversal
-		        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.user,p));
-			        				}
-									found=true;
-								} catch (NoSuchMethodException e) {
-									e.printStackTrace();
-								}
-			        		}
-	        		    }	
-	        		    //si la personne n'est pas présente dans la liste retournée par le serveur et n'est pas un groupe
-	        		    //(absent du serveur), c'est qu'elle s'est déconnectée
-	        		   
-	        		    if(!found && p.getInterlocuteurs().size()<2 && p.getConnected() && !localConnexion.contains(p.getId()))
-							try {
-								System.out.print(" \n Deconnexion de: "+p.getPseudo());
-								p.setConnected(false);
-							} catch (NoSuchMethodException e) {
-								e.printStackTrace();
-							}
-				}
-				//si la liste du serveur contient un nouveau venu on l'ajoute
-				for(Interlocuteurs i:message.getEmetteur().getInterlocuteurs()) {
-	        		boolean found=false;
-					for(Object ob: model.toArray()) {
-		        		Interlocuteurs p =(Interlocuteurs)ob;
-		        		if(i.getId()==p.getId() )
-		        			found=true;
-					}
-					//on ne se connecte pas soi même #régularisation 
-					if(!found && i.getId()!= user.getId() && !localConnexion.contains(i.getId())) {
-						System.out.print(" \n Connexion de: "+i.getPseudo());
-						model.add(0, i);
-						maBD.setIdPseudoLink(i.getPseudo(),i.getId());
-					}
-				}
-			} else
-				System.out.print(" Warning unknow message type !");
-		} else {
-		if (evt.getNewValue() instanceof Message) {
-	        Message message = (Message) evt.getNewValue();
-	        //pas de réponse à notre propre broadcast ^^  
-	        //pas d'affichage des messages qu'on envoie dans un groupe où on est présent (aussi envoyé à soi #même id everywhere))
-	        //possibilité de se parler à soi même
-        	/*if((message.getDestinataire() == null && message.getEmetteur().getId()!=user.getId()) 
-        			|| !message.getEmetteur().getInterlocuteurs().contains(user)
-        			|| (message.getDestinataire() != null 
-        			&& (message.getDestinataire().getId()== user.getId() 
-        			&& message.getEmetteur().getId()==user.getId())))*/
-	        if(user!=null && message.getEmetteur().getId()!=user.getId()){
-	            System.out.print("\n Reception de :"+message.getType().toString()+" de la part de "+message.getEmetteur().getPseudo()+
-	        		   "("+message.getEmetteur().getAddressAndPorts().toString()+")"+"\n" );
-	        if(message.getType()==Message.Type.DEFAULT) {
-	        	if(initialized) {
-	        		if(message.getDestinataire().getInterlocuteurs().size()>1)
-		        		main.update(message.getDestinataire(),message,false); 
-		        	else
-		        		main.update(message.getEmetteur(),message,false);
-		            maBD.addData(message); //SAVE BD LE MESSAGE RECU
-		            // maBD.printMessage();
-	        	}
-	        }
-	        else if(message.getType()==Message.Type.FILE) {
-	        	try {
-	        		String basePath=pathDownload.getCanonicalPath()+"/";
-	        		File newFile=new File(basePath+message.getNameFile());
-	        		int index=0;
-	        		if(newFile.exists())
-	        		    while ((newFile = new File(basePath+"("+index+")"+message.getNameFile())).exists()) {
-	        			    index++;
-	        			}
-	        		Path p=newFile.toPath();
-					Files.write(p, message.getData());
-		        	message.setNameFile(newFile.getAbsolutePath());
-		        	System.out.print(message.getNameFile());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-	        	//si groupe, graphiquement l'emetteur apparait comme étant le groupe
-	        	if(message.getDestinataire().getInterlocuteurs().size()>1)
-	        		main.update(message.getDestinataire(),message,false); 
-	        	else
-	        		main.update(message.getEmetteur(),message,false);
-		        maBD.addFile(message); //SAVE BD LE MESSAGE RECU
-	        }
-	        else if(message.getType()==Message.Type.SWITCH) {
-	        	// long id=maBD.getIdPersonne(message.getEmetteur().getPseudo());
-	        	/* maBD.delIdPseudoLink(message.getEmetteur().getPseudo());*/
-	       		maBD.setIdPseudoLink(message.getEmetteur().getPseudo(),message.getEmetteur().getId());
-	        	for(Object ob: model.toArray()) {
-	        		Interlocuteurs p =(Interlocuteurs)ob;
-	        		if(p.getId()==message.getEmetteur().getId()) {
-	        			try {
-							p.setPseudo(message.getEmetteur().getPseudo());
-						} catch (NoSuchMethodException e) {
-							e.printStackTrace();
-						}
-	        			   break;
-	        		}
-	        	} 
-        	    if(initialized)
-       		    	main.updateList();
-	        }
-	        else if(message.getType()==Message.Type.DECONNECTION) {
-	        	// int index = model.indexOf(message.getEmetteur()); // not working
-	        	//fix via equals redefinition => refactoring possible ! 
-	        	int index=localConnexion.indexOf(message.getEmetteur().getId());
-	        	if(index!= -1)
-	        	localConnexion.remove(index);
-	        	for(Object ob: model.toArray()) {
-	        		Interlocuteurs p =(Interlocuteurs)ob;
-	        			if(p.getId()==message.getEmetteur().getId()) {
-	        			try {
-							p.setConnected(false);
-						} catch (NoSuchMethodException e) {
-							e.printStackTrace();
-						}
-	        			   break;
-	        		}
-	        	}
-	        	  if(initialized) {
-        	    	main.updateList();
-	        	  }
-	        }
-	        else if(message.getType()==Message.Type.ALIVE || message.getType()==Message.Type.CONNECTION) {
-	        	//ONLY PERSON SEND IT (le groupe n'a pas de vie propre, quand 
-	        	//tous ses membres sont connectés il devient connecté (absence de broadcast donc )) 
-	        	localConnexion.add(message.getEmetteur().getId());
-	        	boolean found=false;
-	        	for(Object ob: model.toArray()) {
-	        		Interlocuteurs p =(Interlocuteurs)ob;
-	        	    if(p.getId()==message.getEmetteur().getId()) {
-			       		found=true;
-			       		try {
-							p.setConnected(true);
-				        	p.setPseudo(message.getEmetteur().getPseudo());
-							p.setAddressAndPorts(new SimpleEntry<>(message.getEmetteur().getAddressAndPorts().get(0)));
-							} catch (NoSuchMethodException e) {
-								System.out.print(" Erreur ! Un groupe s'est connecté ^^");
-								e.printStackTrace();
-							}
-			        			break;
-	        		}
-	        	}
-        	    if(!found) {
-        	    	model.add(0, message.getEmetteur());
-		        }
-        	    Reseau.getReseau().cryptProtocole(message.getEmetteur().getId(),user,message.getEmetteur());
-        	    
-		        maBD.setIdPseudoLink(message.getEmetteur().getPseudo(), message.getEmetteur().getId());
-		        if(initialized)
-		        main.updateList();
-	        }else if(message.getType()==Message.Type.KEY ) {
-	        	Reseau.getReseau().addKey(message.getEmetteur().getId(),user.getId(),message.getData());
-	        }
-	        else if(message.getType()==Message.Type.GROUPCREATION ) { 	        	   
-	        	   if(!model.contains(message.getDestinataire())) {
-	        	   //recréation du groupe en local #avec les pointeurs sur lespersonnes que l'on a crées en local #
-	        	   //#auto connexion/deconnexion, pseudo switch
-	        	   ArrayList<Interlocuteurs> array=new ArrayList<>();
-	        	   for(Interlocuteurs i:message.getDestinataire().getInterlocuteurs()) {
-	        		    int index =model.indexOf(i);
-	        		    if(index != -1)
-	        		    array.add(model.get(index));
-	        		    else {
-	        		    System.out.print("\n Warning !, un de vos amis a créé un groupe avec une personne que vous ne connaissez pas, "
-	        		   		+ "ceci peut être dû à un délai réseau, nous ajoutons cette personne" );
-	        		    try {
-							i.setConnected(false);
-						} catch (NoSuchMethodException e) {
-							e.printStackTrace();
-						}
-	        		    model.add(0,i);
-	        		    array.add(i);
-	        		    }
-	        	    }
-	        	    Group g=new Group(array);
-	        	    //g.addInterlocuteur(message.getEmetteur());
-	        	    // g.removeInterlocuteur(user);
-	        	    maBD.addGroup(g.getId(),g.getInterlocuteurs());
-	        	    model.add(1, g);
-	        	    if(initialized)
-	        		    main.updateList();
-	        	    }
-	            }
-	            else if(message.getType()==Message.Type.WHOISALIVE ) { 
-	        	    if(initialized)
-	        	    sendActiveUserPseudo(message.getEmetteur());
-	            }
-	            else if(message.getType()==Message.Type.ASKPSEUDO) {
-	        	    synchronized (mutex) {
-	        	    if(pseudoWaiting.equals(message.getEmetteur().getPseudo()))
-	        	    Reseau.getReseau().sendUDP(Message.Factory.usernameAlreaydTaken(user, message.getEmetteur()));
-	        	    }
-	            }
-	            else if(message.getType()==Message.Type.REPLYPSEUDO)
-	        	    answerPseudo=false;
-	            else if(message.getType()==Message.Type.REVERSALCONNECTION)
-	            	System.out.print(" \n Reversal connection established ! Well done ! ");
-	            else
-	        	    System.out.print("WARNING unknow message type : " + message.getType().toString());
-        	    }
-	        }
-		}
-	}
+
 	/**
 	 * Envoie message de déconnexion à tout le monde
 	 */
@@ -611,7 +362,7 @@ public class ControleurApplication implements PropertyChangeListener{
 	 * @param file fichier à envoyer
 	 * @param f nom du fichier
 	 */
-	public void sendMessage(byte[] file, File f, Interlocuteurs to) {
+	public void sendFileMessage(byte[] file, File f, Interlocuteurs to) {
 		
 		Message m =Message.Factory.sendFile(file, user, to,f.getName());//new Message(file, user, to,f.getName());
 		Reseau.getReseau().sendTCP(m);
@@ -645,5 +396,11 @@ public class ControleurApplication implements PropertyChangeListener{
 		else {
 			return false;	
 		}		
+	}
+	public Object getMutexPseudoWaiting() {
+		return mutex;
+	}
+	public void setAnswerPseudo(boolean b) {
+		answerPseudo=b;
 	}
 }

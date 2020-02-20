@@ -166,7 +166,7 @@ public class BD {
 				Blob btext = rs.getBlob("texte");
 				byte[] data=btext.getBytes(1l, (int) btext.length());
 				Message.Type typ = Message.Type.valueOf(rs.getString("type"));
-				System.out.println("GET HISTORIQUE "+Integer.toString(idEmet) +" "+new String(data)+" ("+ rs.getString("sentDate")+") ["+ typ+"]");
+				//System.out.println("GET HISTORIQUE "+Integer.toString(idEmet) +" "+new String(data)+" ("+ rs.getString("sentDate")+") ["+ typ+"]");
 				if(interlocuteur.getInterlocuteurs().size()>1) {
 					for(Interlocuteurs i: interlocuteur.getInterlocuteurs())
 						if(i.getId()==idEmet)

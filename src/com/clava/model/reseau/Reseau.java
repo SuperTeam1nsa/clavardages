@@ -6,6 +6,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.HashMap;
 
 import javax.crypto.SecretKey;
@@ -89,7 +90,7 @@ public class Reseau implements PropertyChangeListener {
         
         this.clientHTTP=new ClientHTTP(ipServer, portServer);
         clientHTTP.addPropertyChangeListener(this);
-		this.clientTcp = new ClientTCP(hsock, hkey);//on get auto adresse +port dans personne destinataire (get from serveur/UDP #discovery part)
+		this.clientTcp = new ClientTCP(hsock, hkey,hkeyr);//on get auto adresse +port dans personne destinataire (get from serveur/UDP #discovery part)
 		this.clientUDP = new ClientUDP(portUDP);//port nécessaire pour broadcast, #same config UDP everywhere
 	}
 	/**
@@ -137,6 +138,18 @@ public class Reseau implements PropertyChangeListener {
 			e.printStackTrace();
 		}
 	}
+	public void sendServeurOnly(Message message) {
+		sendHttp(message);
+	}
+	public void sendLocalOnly(Message message) {
+		try {
+			clientUDP.broadcast(message);
+		} catch (SocketException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * Utilise ClientUDP pour envoyer en UDP un message au destinataire indiqué dans le message
 	 * @param message à envoyer du type REPLYPSEUDO ou ALIVE
@@ -171,7 +184,15 @@ public class Reseau implements PropertyChangeListener {
 	}
 
 	public void addKey(int otherId, int userId, byte[] data) {
+		System.out.print("\n \n\n ajout de la cle: "+new String(AES.fromByte(RSA.decrypt(userId,data)).getEncoded())+" pour l'id: "+otherId);
 		hkeyr.put(otherId, AES.fromByte(RSA.decrypt(userId,data)));
+	}
+
+	public void removeKey(int id) {
+		System.out.print("\n \n\nsuppression des clefs de session pour l'id: "+id);
+		hkeyr.remove(id);
+		hkey.remove(id);
+		
 	}
 
 }

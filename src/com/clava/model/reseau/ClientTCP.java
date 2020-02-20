@@ -21,9 +21,11 @@ import com.clava.serializable.Message;
 public class ClientTCP {
 	HashMap<Integer, Socket> hsock;
 	HashMap<Integer, SecretKey> hkey;
-	public ClientTCP(HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey) {
+	HashMap<Integer, SecretKey> hkeyr;
+	public ClientTCP(HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey,HashMap<Integer, SecretKey> hkeyr) {
 		this.hsock=hsock;
 		this.hkey=hkey;
+		this.hkeyr=hkeyr;
 	}
 
 	/**
@@ -51,7 +53,7 @@ public class ClientTCP {
 			       	s.connect(sockaddr, 4000);//timeout 4s 
 					hsock.put(i.getId(), s);
 			        //create a thread to listen on this socket because the receiver will respond with this socket
-					ServeurSocketThread st = new ServeurSocketThread(s,hsock,hkey);
+					ServeurSocketThread st = new ServeurSocketThread(s,hsock,hkeyr);
 			        st.addPropertyChangeListener(Reseau.getReseau()); 
 			        Thread th = new Thread(st);
 			        th.start();
