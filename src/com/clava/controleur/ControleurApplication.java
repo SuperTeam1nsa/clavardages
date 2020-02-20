@@ -191,7 +191,7 @@ public class ControleurApplication {
 		//System.out.print("data :" +portTcp+" "+portUDP+" "+portServer+" "+ini.get("IP", "publicServerIp", String.class)+" "+ini.get("IP", "doNotUseAutoIpAndUseThisOne", String.class));
 		new NatInit(portTcp);
 		Reseau.getReseau().init(portTcp,portUDP,ipServer,portServer);
-		mc=new MessageControleur(this,model,user,pseudoWaiting,main,maBD);
+		mc=new MessageControleur(this,model);
 		Reseau.getReseau().addPropertyChangeListener(mc);//.addObserver(this);
 		try {
 		if(forceUseIp)
@@ -402,5 +402,11 @@ public class ControleurApplication {
 	}
 	public void setAnswerPseudo(boolean b) {
 		answerPseudo=b;
+	}
+	public VuePrincipale getVuePrincipale() {
+		return main;
+	}
+	public String getPseudoWaiting() {
+		return pseudoWaiting;
 	}
 }

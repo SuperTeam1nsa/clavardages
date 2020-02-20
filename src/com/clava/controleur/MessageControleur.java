@@ -17,26 +17,18 @@ import com.clava.model.reseau.Reseau;
 import com.clava.serializable.Group;
 import com.clava.serializable.Interlocuteurs;
 import com.clava.serializable.Message;
-import com.clava.serializable.Personne;
-import com.clava.vue.VuePrincipale;
 
 public class MessageControleur implements PropertyChangeListener{
 	private ControleurApplication app;
 	private DefaultListModel<Interlocuteurs> model;
 	private ArrayList<Integer> localConnexion=new ArrayList<>();
-	private Personne user;
 	private boolean initialized=false;
-	private String pseudoWaiting;
-	private VuePrincipale main;
 	private BD maBD;
 	
-	public MessageControleur(ControleurApplication a, DefaultListModel<Interlocuteurs> model, Personne user, String pseudoWaiting, VuePrincipale main, BD maBD) {
+	public MessageControleur(ControleurApplication a, DefaultListModel<Interlocuteurs> model) {
 		app=a;
 		this.model=model;
-		this.user=user;
-		this.pseudoWaiting=pseudoWaiting;
-		this.maBD=maBD;
-		this.main=main;
+		this.maBD=BD.getBD();
 	}
 	/**
 	 * PropertyChange reçoit les messages de Reseau [Design Pattern Observers]
@@ -60,7 +52,7 @@ public class MessageControleur implements PropertyChangeListener{
         			|| (message.getDestinataire() != null 
         			&& (message.getDestinataire().getId()== user.getId() 
         			&& message.getEmetteur().getId()==user.getId())))*/
-	        if(user!=null && message.getEmetteur().getId()!=user.getId()){
+	        if(app.getPersonne()!=null && message.getEmetteur().getId()!=app.getPersonne().getId()){
 	        	this.localMessage(message);
 	        }
         	    }
@@ -74,9 +66,9 @@ private void localMessage(Message message) {
 if(message.getType()==Message.Type.DEFAULT) {
 	if(initialized) {
 		if(message.getDestinataire().getInterlocuteurs().size()>1)
-    		main.update(message.getDestinataire(),message,false); 
+			app.getVuePrincipale().update(message.getDestinataire(),message,false); 
     	else
-    		main.update(message.getEmetteur(),message,false);
+    		app.getVuePrincipale().update(message.getEmetteur(),message,false);
         maBD.addData(message); //SAVE BD LE MESSAGE RECU
         // maBD.printMessage();
 	}
@@ -99,9 +91,9 @@ else if(message.getType()==Message.Type.FILE) {
 	}
 	//si groupe, graphiquement l'emetteur apparait comme étant le groupe
 	if(message.getDestinataire().getInterlocuteurs().size()>1)
-		main.update(message.getDestinataire(),message,false); 
+		app.getVuePrincipale().update(message.getDestinataire(),message,false); 
 	else
-		main.update(message.getEmetteur(),message,false);
+		app.getVuePrincipale().update(message.getEmetteur(),message,false);
     maBD.addFile(message); //SAVE BD LE MESSAGE RECU
 }
 else if(message.getType()==Message.Type.SWITCH) {
@@ -120,7 +112,7 @@ else if(message.getType()==Message.Type.SWITCH) {
 		}
 	} 
     if(initialized)
-	    	main.updateList();
+    	app.getVuePrincipale().updateList();
 }
 else if(message.getType()==Message.Type.DECONNECTION) {
 	Reseau.getReseau().removeKey(message.getEmetteur().getId());
@@ -141,7 +133,7 @@ else if(message.getType()==Message.Type.DECONNECTION) {
 		}
 	}
 	  if(initialized) {
-    	main.updateList();
+		  app.getVuePrincipale().updateList();
 	  }
 }
 else if(message.getType()==Message.Type.ALIVE || message.getType()==Message.Type.CONNECTION) {
@@ -167,13 +159,13 @@ else if(message.getType()==Message.Type.ALIVE || message.getType()==Message.Type
     if(!found) {
     	model.add(0, message.getEmetteur());
     }
-    Reseau.getReseau().cryptProtocole(message.getEmetteur().getId(),user,message.getEmetteur());
+    Reseau.getReseau().cryptProtocole(message.getEmetteur().getId(),app.getPersonne(),message.getEmetteur());
     
     maBD.setIdPseudoLink(message.getEmetteur().getPseudo(), message.getEmetteur().getId());
     if(initialized)
-    main.updateList();
+    	app.getVuePrincipale().updateList();
 }else if(message.getType()==Message.Type.KEY ) {
-	Reseau.getReseau().addKey(message.getEmetteur().getId(),user.getId(),message.getData());
+	Reseau.getReseau().addKey(message.getEmetteur().getId(),app.getPersonne().getId(),message.getData());
 }
 else if(message.getType()==Message.Type.GROUPCREATION ) { 	        	   
 	   if(!model.contains(message.getDestinataire())) {
@@ -202,7 +194,7 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
 	    maBD.addGroup(g.getId(),g.getInterlocuteurs());
 	    model.add(1, g);
 	    if(initialized)
-		    main.updateList();
+	    	app.getVuePrincipale().updateList();
 	    }
     }
     else if(message.getType()==Message.Type.WHOISALIVE ) { 
@@ -211,8 +203,8 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
     }
     else if(message.getType()==Message.Type.ASKPSEUDO) {
 	    synchronized (app.getMutexPseudoWaiting()) {
-	    if(pseudoWaiting.equals(message.getEmetteur().getPseudo()))
-	    Reseau.getReseau().sendUDP(Message.Factory.usernameAlreaydTaken(user, message.getEmetteur()));
+	    if(app.getPseudoWaiting().equals(message.getEmetteur().getPseudo()))
+	    Reseau.getReseau().sendUDP(Message.Factory.usernameAlreaydTaken(app.getPersonne(), message.getEmetteur()));
 	    }
     }
     else if(message.getType()==Message.Type.REPLYPSEUDO)
@@ -249,15 +241,15 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
 				        			System.out.print(" \n [serveur] MAJ du pseudo de : "+p.getPseudo());
 									p.setPseudo(i.getPseudo());
 		        				}//si app crashe, on ignore l'info du serveur disant qu'on était déjà connecté (notre connexion va régulariser la situation)
-		        				if(!p.getConnected() && i.getId()!=user.getId()) {
+		        				if(!p.getConnected() && i.getId()!=app.getPersonne().getId()) {
 	        					    System.out.print(" \n [serveur] Connexion de : "+p.getPseudo()+" à "+i.getAddressAndPorts().get(0));
 	        					    p.setConnected(true);
 	        					    /// ok if NAT well config #upnp or manually 
 	        					    p.setAddressAndPorts(i.getAddressAndPorts().get(0));
 	        					    //envoie de notre clef AES calculée
-	        					    Reseau.getReseau().cryptProtocole(p.getId(),user,p);
+	        					    Reseau.getReseau().cryptProtocole(p.getId(),app.getPersonne(),p);
 	        					    ///nat reversal
-	        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.user,p));
+	        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.app.getPersonne(),p));
 		        				}
 								found=true;
 							} catch (NoSuchMethodException e) {
@@ -286,7 +278,7 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
 	        			found=true;
 				}
 				//on ne se connecte pas soi même #régularisation 
-				if(!found && i.getId()!= user.getId() && !localConnexion.contains(i.getId())) {
+				if(!found && i.getId()!= app.getPersonne().getId() && !localConnexion.contains(i.getId())) {
 					System.out.print(" \n Connexion de: "+i.getPseudo());
 					model.add(0, i);
 					maBD.setIdPseudoLink(i.getPseudo(),i.getId());
