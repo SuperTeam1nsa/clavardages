@@ -13,6 +13,8 @@ import javax.swing.DefaultListModel;
 import java.util.AbstractMap.SimpleEntry;
 
 import com.clava.model.bd.BD;
+import com.clava.model.crypt.AES;
+import com.clava.model.crypt.RSA;
 import com.clava.model.reseau.Reseau;
 import com.clava.serializable.Group;
 import com.clava.serializable.Interlocuteurs;
@@ -115,7 +117,7 @@ else if(message.getType()==Message.Type.SWITCH) {
     	app.getVuePrincipale().updateList();
 }
 else if(message.getType()==Message.Type.DECONNECTION) {
-	Reseau.getReseau().removeKey(message.getEmetteur().getId());
+	AES.removeKey(message.getEmetteur().getId());
 	// int index = model.indexOf(message.getEmetteur()); // not working
 	//fix via equals redefinition => refactoring possible ! 
 	int index=localConnexion.indexOf(message.getEmetteur().getId());
@@ -165,7 +167,9 @@ else if(message.getType()==Message.Type.ALIVE || message.getType()==Message.Type
     if(initialized)
     	app.getVuePrincipale().updateList();
 }else if(message.getType()==Message.Type.KEY ) {
-	Reseau.getReseau().addKey(message.getEmetteur().getId(),app.getPersonne().getId(),message.getData());
+	int otherId=message.getEmetteur().getId();
+	AES.storeKey(otherId,AES.fromByte(RSA.decrypt(app.getPersonne().getId(),message.getData())));
+	//Reseau.getReseau().addKey(message.getEmetteur().getId(),app.getPersonne().getId(),message.getData());
 }
 else if(message.getType()==Message.Type.GROUPCREATION ) { 	        	   
 	   if(!model.contains(message.getDestinataire())) {
@@ -263,7 +267,7 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
         		    if(!found && p.getInterlocuteurs().size()<2 && p.getConnected() && !localConnexion.contains(p.getId()))
 						try {
 							System.out.print(" \n Deconnexion de: "+p.getPseudo());
-							Reseau.getReseau().removeKey(p.getId());
+							AES.removeKey(p.getId());
 							p.setConnected(false);
 						} catch (NoSuchMethodException e) {
 							e.printStackTrace();

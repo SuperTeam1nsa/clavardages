@@ -8,8 +8,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 
-import javax.crypto.SecretKey;
-
 
 //public class ServeurTCP extends Observable implements Observer, Runnable {
 /**
@@ -21,7 +19,6 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
 	private int port;
 	private PropertyChangeSupport support;
 	HashMap<Integer, Socket> hsock;
-	HashMap<Integer, SecretKey> hkeyr;
 	/**
 	 * Constructeur ServeurTCP
 	 * <p>[Design Pattern Observers]</p>
@@ -29,10 +26,9 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
 	 * @param hkey2 
 	 * @param hsock 
 	 */	
-	public ServeurTCP(int port, HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey2) {
+	public ServeurTCP(int port, HashMap<Integer, Socket> hsock) {
 		this.port=port;
 		this.hsock=hsock;
-		this.hkeyr=hkey2;
 		support = new PropertyChangeSupport(this);
 	}
     /**
@@ -75,7 +71,7 @@ public class ServeurTCP implements PropertyChangeListener, Runnable{
             Socket soc = null;
 			try {
 				soc = ssoc.accept();
-				ServeurSocketThread st = new ServeurSocketThread(soc,hsock,hkeyr);
+				ServeurSocketThread st = new ServeurSocketThread(soc,hsock);
 	            st.addPropertyChangeListener(this); 
 	            Thread th = new Thread(st);
 	            th.start();

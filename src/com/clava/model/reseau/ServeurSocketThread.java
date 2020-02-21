@@ -1,16 +1,15 @@
 package com.clava.model.reseau;
 
-import java.net.*;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
 import java.util.HashMap;
-
-import javax.crypto.SecretKey;
 
 import com.clava.model.crypt.AES;
 import com.clava.serializable.Message;
-
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.*;
 
 //public class ServeurSocketThread extends Observable implements Runnable {
 /**
@@ -18,12 +17,11 @@ import java.io.*;
  */
 public class ServeurSocketThread implements Runnable {
     Socket s;
-    HashMap<Integer, Socket> hsock;
-    HashMap<Integer, SecretKey> hkeyr;
     private PropertyChangeSupport support;
 	private boolean on=true;
 	private boolean first=true;
 	private int id=0;
+	HashMap<Integer, Socket> hsock;
     /**
      * Constructeur ServeurSocketThread
      * <p>[Design Pattern Observers]</p>
@@ -31,11 +29,10 @@ public class ServeurSocketThread implements Runnable {
      * @param hkey2 
      * @param hsock 
      */
-    public ServeurSocketThread(Socket soc, HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey2) {
+    public ServeurSocketThread(Socket soc, HashMap<Integer, Socket> hsock) {
         this.s = soc;
-        this.hkeyr=hkey2;
-        this.hsock=hsock;
         support = new PropertyChangeSupport(this);
+        this.hsock=hsock;
     }
     /**
      * Ajoute un Listener à notifier (ServeurTCP)
@@ -71,6 +68,8 @@ public class ServeurSocketThread implements Runnable {
             DataInputStream dis = new DataInputStream(is);
             int len = dis.readInt();
             int idkey = dis.readInt();
+            byte[] IV=new byte[16];
+            dis.read(IV, 0, 16);
             byte[] data = new byte[len];
             if (len > 0) {
                 dis.readFully(data);
@@ -86,9 +85,8 @@ public class ServeurSocketThread implements Runnable {
 	            		else
 	            			System.out.print("\n reception of safe unencrypted data");
 	            	}catch(Exception e) {
-	            		if(hkeyr.get(idkey) !=null) {
-	            			System.out.print("\n key used reception:"+new String(hkeyr.get(idkey).getEncoded())+" id recu: "+idkey+"\n");	
-	            			m=Message.deserialize(AES.decrypt(hkeyr.get(idkey), data));
+	            		if(AES.canDecrypt(idkey)){	
+	            			m=Message.deserialize(AES.decrypt(idkey, data,IV));
 	            		}
 	            		else
 	            			System.out.print("\n warning reception of a crypted message without the key to decrypt");

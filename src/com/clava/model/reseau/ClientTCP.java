@@ -10,7 +10,6 @@ import java.net.SocketAddress;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
 
-import javax.crypto.SecretKey;
 
 import com.clava.model.crypt.AES;
 import com.clava.serializable.Interlocuteurs;
@@ -20,12 +19,8 @@ import com.clava.serializable.Message;
  */
 public class ClientTCP {
 	HashMap<Integer, Socket> hsock;
-	HashMap<Integer, SecretKey> hkey;
-	HashMap<Integer, SecretKey> hkeyr;
-	public ClientTCP(HashMap<Integer, Socket> hsock, HashMap<Integer, SecretKey> hkey,HashMap<Integer, SecretKey> hkeyr) {
+	public ClientTCP(HashMap<Integer, Socket> hsock) {
 		this.hsock=hsock;
-		this.hkey=hkey;
-		this.hkeyr=hkeyr;
 	}
 
 	/**
@@ -53,7 +48,7 @@ public class ClientTCP {
 			       	s.connect(sockaddr, 4000);//timeout 4s 
 					hsock.put(i.getId(), s);
 			        //create a thread to listen on this socket because the receiver will respond with this socket
-					ServeurSocketThread st = new ServeurSocketThread(s,hsock,hkeyr);
+					ServeurSocketThread st = new ServeurSocketThread(s,hsock);
 			        st.addPropertyChangeListener(Reseau.getReseau()); 
 			        Thread th = new Thread(st);
 			        th.start();
@@ -63,21 +58,22 @@ public class ClientTCP {
         DataOutputStream dos = new DataOutputStream(os);
         //Envoyer les datas       
         try {
-        	SecretKey key=hkey.get(i.getId());
-        	if(key != null)
-        	System.out.print("\n key used sending:"+new String(key.getEncoded())+" to : "+i.getId()+" from "+ m.getEmetteur().getId()+"\n");	
-        	else
-        		System.out.print("\n no key sending :/ ");
+        	if(!AES.canCrypt(i.getId()))
+        		System.out.print("\n no key, no cryptage  :/ ");
         	byte[] data=Message.serialize(m);
         	byte[] byteMessage=null;
+        	byte[] IV=new byte[16];
         	//si on a pas la clef ou quel'on envoie la cle (cryptage RSA déjà réalisé)
-        	if(key != null && m.getType()!=Message.Type.KEY)
-        		byteMessage=AES.encrypt(key,data );// RSA.crypt(i.getId(),Message.serialize(m));
-        	else
+        	if(AES.canCrypt(i.getId()) && m.getType()!=Message.Type.KEY) {
+        		IV=AES.generateIV();
+        		byteMessage=AES.encrypt(i.getId(),data,IV);// RSA.crypt(i.getId(),Message.serialize(m));
+        	}
+        	else 
         		byteMessage=data;
 			int len = byteMessage.length;
 			dos.writeInt(len);
 			dos.writeInt(m.getEmetteur().getId());
+			dos.write(IV, 0, 16);
 			if (len > 0) {
 			    dos.write(byteMessage, 0, len);
 			    dos.flush();

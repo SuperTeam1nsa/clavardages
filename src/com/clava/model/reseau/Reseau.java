@@ -9,9 +9,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 
-import javax.crypto.SecretKey;
 import javax.swing.JOptionPane;
 
+import com.clava.controleur.ControleurApplication;
 import com.clava.model.crypt.AES;
 import com.clava.model.crypt.RSA;
 import com.clava.serializable.Interlocuteurs;
@@ -34,8 +34,6 @@ public class Reseau implements PropertyChangeListener {
 	private ServeurUDP serveurUDP;
 	static Reseau theNetwork;
 	private HashMap<Integer,Socket> hsock=new HashMap<>();
-	private HashMap<Integer,SecretKey> hkey=new HashMap<>();//clef d'envoi
-	private HashMap<Integer,SecretKey> hkeyr=new HashMap<>();//clef de reception
 
 	/**
 	 * Remonte message reçu du reseau par les classes ClientHTTP ou ServeurUDP ou encore ServeurTCP à la classe ControlleurApplication [Design Pattern Observers]
@@ -78,7 +76,7 @@ public class Reseau implements PropertyChangeListener {
 	 */	
 	public void init(int portTCP, int portUDP, String ipServer, int portServer) {
 		support = new PropertyChangeSupport(this);
-		this.serveurTcp = new ServeurTCP(portTCP,hsock, hkeyr);
+		this.serveurTcp = new ServeurTCP(portTCP,hsock);
 		this.serveurTcp.addPropertyChangeListener(this);
 
 		Thread tr = new Thread(serveurTcp);
@@ -90,7 +88,7 @@ public class Reseau implements PropertyChangeListener {
         
         this.clientHTTP=new ClientHTTP(ipServer, portServer);
         clientHTTP.addPropertyChangeListener(this);
-		this.clientTcp = new ClientTCP(hsock, hkey,hkeyr);//on get auto adresse +port dans personne destinataire (get from serveur/UDP #discovery part)
+		this.clientTcp = new ClientTCP(hsock);//on get auto adresse +port dans personne destinataire (get from serveur/UDP #discovery part)
 		this.clientUDP = new ClientUDP(portUDP);//port nécessaire pour broadcast, #same config UDP everywhere
 	}
 	/**
@@ -173,26 +171,15 @@ public class Reseau implements PropertyChangeListener {
 
 	public void cryptProtocole(int id,Interlocuteurs user, Interlocuteurs to) {
 		if(RSA.havePublic(id)) {
-			if(hkey.get(id)==null) {
-				byte[] key= AES.generateKey();
-				hkey.put(id,AES.fromByte(key));
+			if(!AES.canCrypt(id)) {
+				byte[] key =AES.generateKey(id);
 				this.sendTCP(Message.Factory.keyExchange(RSA.crypt(id,key),user,to));
+				if(key==null)
+					System.out.print("\n DANGER ! AES issue can't generate the key !");
 			}
 		}
 		else
 			System.out.print("\n \n WARNING CANNOT ESTABLISH SECURE PROTOCOL (MISS PUCLIC KEY):"+new File("keys/"+id+"/public.key").getAbsolutePath());
-	}
-
-	public void addKey(int otherId, int userId, byte[] data) {
-		System.out.print("\n \n\n ajout de la cle: "+new String(AES.fromByte(RSA.decrypt(userId,data)).getEncoded())+" pour l'id: "+otherId);
-		hkeyr.put(otherId, AES.fromByte(RSA.decrypt(userId,data)));
-	}
-
-	public void removeKey(int id) {
-		System.out.print("\n \n\nsuppression des clefs de session pour l'id: "+id);
-		hkeyr.remove(id);
-		hkey.remove(id);
-		
 	}
 
 }
