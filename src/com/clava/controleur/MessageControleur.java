@@ -253,7 +253,7 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
 	        					    //envoie de notre clef AES calculée
 	        					    Reseau.getReseau().cryptProtocole(p.getId(),app.getPersonne(),p);
 	        					    ///nat reversal
-	        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.app.getPersonne(),p));
+	        					    Reseau.getReseau().sendTCP(Message.Factory.reversalConnexionConfig(this.app.getPersonne(),p),true);
 		        				}
 								found=true;
 							} catch (NoSuchMethodException e) {
@@ -263,8 +263,9 @@ else if(message.getType()==Message.Type.GROUPCREATION ) {
         		    }	
         		    //si la personne n'est pas présente dans la liste retournée par le serveur et n'est pas un groupe
         		    //(absent du serveur), c'est qu'elle s'est déconnectée
-        		   
-        		    if(!found && p.getInterlocuteurs().size()<2 && p.getConnected() && !localConnexion.contains(p.getId()))
+        		   // et ce n'est pas nous #on est au courant quand on se déconnecte ^^ 
+        		    if(!found && p.getInterlocuteurs().size()<2 && p.getConnected() && !localConnexion.contains(p.getId()) 
+        		    		&&p.getId()!=app.getPersonne().getId())
 						try {
 							System.out.print(" \n Deconnexion de: "+p.getPseudo());
 							AES.removeKey(p.getId());

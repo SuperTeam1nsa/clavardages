@@ -58,3 +58,5 @@ doc/*
 *.css
 doc/element-list
 *.key
+keys/X509_certificate.cer
+keys/keystore.jks

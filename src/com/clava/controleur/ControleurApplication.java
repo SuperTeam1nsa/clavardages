@@ -23,6 +23,7 @@ import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Wini;
 
 import com.clava.model.bd.BD;
+import com.clava.model.crypt.AES;
 import com.clava.model.crypt.RSA;
 import com.clava.model.reseau.Reseau;
 import com.clava.serializable.Group;
@@ -206,6 +207,9 @@ public class ControleurApplication {
 				mac.hashCode()); //fixe par poste (adresse mac by eg) 
 		//note: not cryptographic sure id, the cryptographic strenght relies on keys (as the pseudo it's easy to spoof an id)
 		RSA.init(user.getId());
+
+
+
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (SocketException e) {
@@ -218,7 +222,7 @@ public class ControleurApplication {
 	    Reseau.getReseau().addKey(user.getId(),user.getId(),
 	    		Message.Factory.keyExchange(RSA.crypt(user.getId(),AES.generateKey()),user,user).getData());
 	    */
-		//AES.test();
+		AES.test();
 	}
 	/**
 	 * Constructeur ControleurApplication 
@@ -226,7 +230,7 @@ public class ControleurApplication {
 	 */
 	ControleurApplication(){
 		init();		
-		//test();
+		test();
 	    //on récupère les gens avec qui on a déjà parlé #offline reading
 	    for(Interlocuteurs p: maBD.getInterlocuteursTalked(user)) {
 			if(p.getId()!=user.getId())
