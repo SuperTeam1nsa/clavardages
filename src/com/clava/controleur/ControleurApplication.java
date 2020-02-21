@@ -208,8 +208,12 @@ public class ControleurApplication {
 		//note: not cryptographic sure id, the cryptographic strenght relies on keys (as the pseudo it's easy to spoof an id)
 		RSA.init(user.getId());
 
-
-
+		//for ssl encryption
+		/*System.setProperty("javax.net.ssl.keyStore", "keys/keystore.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "^^ and it's kind of challenging");
+		System.setProperty("javax.net.ssl.trustStore", "keys/keystore.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "^^ and it's kind of challenging");
+		//System.setProperty("jdk.tls.server.protocols", "TLSv1.2");*/
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (SocketException e) {
@@ -222,6 +226,7 @@ public class ControleurApplication {
 	    Reseau.getReseau().addKey(user.getId(),user.getId(),
 	    		Message.Factory.keyExchange(RSA.crypt(user.getId(),AES.generateKey()),user,user).getData());
 	    */
+		RSA.RSAtest();
 		AES.test();
 	}
 	/**
@@ -230,7 +235,7 @@ public class ControleurApplication {
 	 */
 	ControleurApplication(){
 		init();		
-		test();
+		//test();
 	    //on récupère les gens avec qui on a déjà parlé #offline reading
 	    for(Interlocuteurs p: maBD.getInterlocuteursTalked(user)) {
 			if(p.getId()!=user.getId())

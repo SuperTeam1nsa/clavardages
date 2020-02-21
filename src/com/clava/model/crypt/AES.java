@@ -18,6 +18,13 @@ import javax.crypto.spec.SecretKeySpec;
  * Rqs: it will be way more secure to use SSL https://www.baeldung.com/java-ssl
  * https://stackoverflow.com/questions/13874387/create-app-with-sslsocket-java
  * but letting someone try to break this encryption process I wish him good luck ^^ and it's kind of challenging
+ * https://docs.oracle.com/cd/E11035_01/wls100/security/SSL_client.html
+ * 
+ *keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -storepass "^^ and it's kind of challenging" -validity 3600 -keysize 4096
+ *keytool -export -alias selfsigned -storepass "^^ and it's kind of challenging" -keystore keystore.jks -rfc -file X509_certificate.cer
+ *keytool -import -trustcacerts -alias root -file .\X509_certificate.cer -storepass "^^ and it's kind of challenging" -keystore keystore.jks
+ *keytool -list -v -keystore .\keystore.jks -storepass "^^ and it's kind of challenging"
+ * 
  * @author RF
  *
  */
